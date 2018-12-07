@@ -103,23 +103,32 @@ public class HuffProcessor {
 	
 	private void writeHeader(HuffNode rt, BitOutputStream out) {
 			if (rt == null) return;
-			if (rt.myLeft == null && rt.myRight == null) out.writeBits(1, BITS_PER_WORD+1);
-			if (rt.myLeft != null) writeHeader(rt.myLeft,out);
-			if (rt.myRight != null) writeHeader(rt.myRight,out);
-		
+			if (rt.myLeft == null && rt.myRight == null) {
+				out.writeBits(1, 1);
+				int temp = rt.myValue; //I am assigning a space of 1 and the value is one (leaf node)
+				out.writeBits(BITS_PER_WORD+1, temp); //I am assigning a space of 8 bits + 1 bit (b/c PSEUDO_EOF) and what is stored in the leaf
+				return;
+			}
+			
+			out.writeBits(1, 0); //I am assigning a space of 1 bit, and the value is zero (internal node)
+			
+			writeHeader(rt.myLeft,out);
+			writeHeader(rt.myRight,out);
 	}
 	
 	private void writeCompressedBits(String[] cd, BitInputStream in, BitOutputStream out) {
 		
 		int temp = in.readBits(BITS_PER_WORD);
-		while (temp >= 0) {
+		while (temp != -1) {
 				String code = cd[temp];
 				out.writeBits(code.length(), Integer.parseInt(code,2));
 				temp = in.readBits(BITS_PER_WORD);
 		}
 		
 		String st = cd[PSEUDO_EOF];
-		out.writeBits(st.length(),Integer.parseInt(st,2)); //writeBits to out 
+		out.writeBits(st.length(),Integer.parseInt(st,2));
+		
+		 //writeBits to out 
 	}
 	
 	/**
